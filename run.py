@@ -5,9 +5,9 @@ from datetime import datetime
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- ENCODED CONFIG ---
-# GitHub Raw Link (Hidden)
+# GitHub Link (Hidden)
 _0x446 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2tva29hcmthcjQ0Ni1jbG91ZC9TdGFybGluay9yZWZzL2hlYWRzL21haW4va2V5LnR4dA=="
-# License Save File (Hidden)
+# Hidden License File
 _0x112 = "LnN5c3RlbV9jb25maWdfZGF0YV9sb2c="
 
 def get_link(): return base64.b64decode(_0x446).decode()
@@ -18,7 +18,7 @@ Y, G, R, W, C, M, OFF = "\033[1;33m", "\033[1;32m", "\033[1;31m", "\033[1;37m", 
 
 def get_uid():
     try: return subprocess.check_output(['whoami']).decode('utf-8').strip()
-    except: return "u0_a232"
+    except: return "u0_a128"
 
 def banner(name="GUEST", exp="----/--/-- --:--"):
     os.system('clear')
@@ -40,7 +40,6 @@ def check_access():
     v_url = get_link()
     v_file = get_file()
 
-    # 1. Offline Database Check
     if os.path.exists(v_file):
         try:
             with open(v_file, "r") as f:
@@ -53,7 +52,6 @@ def check_access():
                         return True
         except: pass
 
-    # 2. Online Authentication
     try:
         print(f" {Y}[*] Connecting to secure server...{OFF}")
         res = requests.get(f"{v_url}?t={random.random()}", timeout=10, verify=False)
@@ -63,18 +61,14 @@ def check_access():
                     parts = line.split('|')
                     v_name, v_exp_str = parts[1].strip(), parts[2].strip()
                     expire_time = datetime.strptime(v_exp_str, "%Y-%m-%d %H:%M")
-                    
                     if now < expire_time:
-                        with open(v_file, "w") as f:
-                            f.write(f"{uid}|{v_name}|{v_exp_str}")
+                        with open(v_file, "w") as f: f.write(f"{uid}|{v_name}|{v_exp_str}")
                         banner(v_name, v_exp_str)
                         return True
                     else:
                         banner(v_name, v_exp_str)
-                        print(f" {R}[!] LICENSE EXPIRED. PLEASE RENEW.{OFF}")
-                        sys.exit()
-
-            # Unauthorized UI
+                        print(f" {R}[!] LICENSE EXPIRED. PLEASE RENEW.{OFF}"); sys.exit()
+            
             os.system('clear')
             print(f" {R}╔══════════════════════════════════════════╗")
             print(f" ║          ACCESS DENIED: NO KEY           ║")
@@ -84,8 +78,7 @@ def check_access():
             print(f" {M}[*] Copy your ID and send to Admin.{OFF}")
             sys.exit()
     except:
-        print(f" {R}[!] CONNECTION ERROR: INTERNET REQUIRED FOR FIRST BOOT.{OFF}")
-        sys.exit()
+        print(f" {R}[!] CONNECTION ERROR: INTERNET REQUIRED FOR BOOT.{OFF}"); sys.exit()
 
 def turbo_pulse(link):
     headers = {"User-Agent": "Mozilla/5.0", "Connection": "keep-alive"}
@@ -98,7 +91,7 @@ def turbo_pulse(link):
 def start_speed_logic():
     session = requests.Session()
     try:
-        print(f" {W}[*] {C}Bypassing Gateway Sequence...{OFF}")
+        print(f" {W}[*] {C}Initiating Bypass Sequence...{OFF}")
         r = requests.get("http://connectivitycheck.gstatic.com/generate_204", allow_redirects=True, timeout=5)
         p_url = r.url
         r1 = session.get(p_url, verify=False, timeout=6)
@@ -122,7 +115,7 @@ def start_speed_logic():
                 time.sleep(5)
                 if requests.get("http://google.com", timeout=5).status_code != 200: break
         else:
-            print(f" {R}[!] REDIRECT FAILED. RETRYING...{OFF}"); time.sleep(2); start_speed_logic()
+            print(f" {R}[!] SESSION ERROR. RETRYING...{OFF}"); time.sleep(2); start_speed_logic()
     except: time.sleep(3); start_speed_logic()
 
 if __name__ == "__main__":
