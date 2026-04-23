@@ -5,7 +5,7 @@ from datetime import datetime
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- [ CONFIGURATION ] ---
-RAW_KEY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Bypass-code/main/keys.txt"
+RAW_KEY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
 LICENSE_FILE = "license.txt"
 
 # --- [ SYSTEM COLORS ] ---
