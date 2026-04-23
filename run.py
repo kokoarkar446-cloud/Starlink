@@ -1,112 +1,85 @@
 import requests, urllib3, time, os, subprocess, sys, random
-from datetime import datetime
 
-# SSL Bypass
+# SSL Warnings ပိတ်ခြင်း
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- [ CONFIGURATION ] ---
-# သင်အသုံးပြုမည့် VIP Key List Link
-PRIMARY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
+RAW_KEY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Bypass-code/main/keys.txt"
+LICENSE_FILE = "license.txt"
 
-def get_uid():
-    """Device UID (Hardware ID) ကို ရယူခြင်း"""
-    try:
-        # Android device serial ကို အရင်စစ်မယ်
-        uid = subprocess.check_output(['getprop', 'ro.serialno'], stderr=subprocess.STDOUT).decode('utf-8').strip()
-        if not uid: raise Exception
-        return f"ID-{uid}"
-    except:
-        # Serial ရှာမရပါက Username ကို ယူမယ်
-        try: return f"ID-{subprocess.check_output(['whoami']).decode('utf-8').strip()}"
-        except: return "ID-UNKNOWN-USER"
+# --- [ SYSTEM COLORS ] ---
+def col(c):
+    codes = {
+        "Y": "\033[93m", "G": "\033[92m", "R": "\033[91m", 
+        "C": "\033[96m", "P": "\033[95m", "W": "\033[97m", "OFF": "\033[0m"
+    }
+    return codes.get(c, "\033[0m")
 
-def banner(name="GUEST", exp="Checking...", days="--", col="\033[92m"):
-    """Starlink & KoCLAY Style Combined UI Banner"""
+def get_hwid():
+    # ID ကို Whoami ဖြင့် ရယူခြင်း
+    return f"ID-{subprocess.check_output(['whoami']).decode().strip()}"
+
+def banner():
     os.system('clear')
-    print("\033[93m" + " ="*38)
-    print("\033[96m" + """
-     ██╗  ██╗ ██████╗  ██████╗██╗      █████╗ ██╗   ██╗
-     ██║ ██╔╝██╔═══██╗██╔════╝██║     ██╔══██╗╚██╗ ██╔╝
-     █████╔╝ ██║   ██║██║     ██║     ███████║ ╚████╔╝ 
-     ██╔═██╗ ██║   ██║██║     ██║     ██╔══██║  ╚██╔╝  
-     ██║  ██╗╚██████╔╝╚██████╗███████╗██║  ██║   ██║   
-     ╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚══════╝╚═╝  ╚═╝   ╚═╝   """)
-    print(f"\033[95m 👑 MASTER: {name} | ID: {get_uid()}")
-    print(f"\033[92m 📅 EXP: {exp} | ⏳ REMAINING: {days} Days")
-    print(f"\033[93m ="*7 + f" [ {col}PREMIUM KEY SYSTEM ACTIVE\033[93m ] " + "="*8)
-    print("\033[0m")
+    print(col("Y") + " ="*35 + col("OFF"))
+    print(col("C") + """
+      ██████╗ ██╗   ██╗██╗     ██╗██╗███████╗
+      ██╔══██╗██║   ██║██║     ██║██║██╔════╝
+      ██████╔╝██║   ██║██║     ██║██║█████╗  
+      ██╔══██╗██║   ██║██║██   ██║██║██╔══╝  
+      ██║  ██║╚██████╔╝██║╚█████╔╝██║███████╗
+      ╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚════╝ ╚═╝╚══════╝""" + col("OFF"))
+    print(f"        {col('R')}✨ Ruijie Bypass - PREMIUM EDITION ✨{col('OFF')}")
+    print(col("Y") + " ="*35 + col("OFF") + "\n")
 
-def check_access():
-    """Key System Logic: UID နှင့် Expiry ကို Server တွင် တိုက်စစ်ခြင်း"""
-    uid = get_uid()
+def verify():
+    hwid = get_hwid()
+    banner()
+
+    # ၁။ Offline Login (File ရှိနေရင် အင်တာနက်မစစ်ဘဲ Dashboard တန်းပြမယ်)
+    if os.path.exists(LICENSE_FILE):
+        print(f"{col('G')}[✓] Status: Active (Offline Auto Login Success){col('OFF')}")
+        time.sleep(1)
+        return True
+
+    # ၂။ Online Activation (File မရှိမှ တစ်ခါပဲ အင်တာနက်စစ်မယ်)
+    print(f"{col('W')}[*] First Time Activation. Connecting to Server...{col('OFF')}")
+    resp = requests.get(f"{RAW_KEY_URL}?t={random.random()}", timeout=15).text
     
-    # ၁။ Server Time ယူခြင်း (အချိန်ခိုးပြင်တာ တားဆီးရန်)
-    try:
-        r_t = requests.get("http://worldtimeapi.org/api/timezone/Asia/Yangon", timeout=5)
-        now = datetime.strptime(r_t.json()['datetime'][:10], '%Y-%m-%d')
-    except:
-        # အင်တာနက်မရလျှင် Local Time သုံးမယ်
-        now = datetime.now() 
+    print(f"{col('W')}[+] YOUR DEVICE ID: {col('Y')}{hwid}{col('OFF')}")
+    print(col("C") + " -----------------------------------" + col("OFF"))
+    key = input(f"{col('Y')}[?] ENTER LICENSE KEY: {col('OFF')}").strip()
 
-    # ၂။ GitHub VIP List ကို စစ်ဆေးခြင်း
-    try:
-        print("\033[94m[*] Connecting to Starlink Database...\033[0m")
-        # Cache မဖြစ်အောင် random param ထည့်ထားတယ်
-        res = requests.get(f"{PRIMARY_URL}?t={random.random()}", timeout=10, verify=False)
-        
-        if res.status_code == 200:
-            for line in res.text.splitlines():
-                if uid in line:
-                    # Format မျှော်လင့်ချက်: UID | Name | YYYY-MM-DD
-                    parts = line.split('|')
-                    v_name = parts[1].strip()
-                    v_exp = parts[2].strip()
-                    exp_dt = datetime.strptime(v_exp, '%Y-%m-%d')
-                    
-                    diff = (exp_dt - now).days
-                    if diff < 0:
-                        banner(v_name, v_exp, "0", "\033[91m")
-                        print("\033[91m[!] Subscription Expired! Please contact Admin to Renew.\033[0m")
-                        sys.exit()
-                    
-                    banner(v_name, v_exp, str(diff + 1))
-                    return True
-            
-            # UID ကို list ထဲမှာ ရှာမတွေ့ပါက
-            banner()
-            print(f"\033[91m[!] Access Denied!\033[0m")
-            print(f"\033[97mYour ID: {col_y}{uid}{col_off} is not registered in our system.")
-            sys.exit()
-    except Exception as e:
-        print(f"\033[91m[!] Server Connection Error! Please check your internet.\033[0m")
+    # Key:ID format ကို GitHub က စာသားထဲမှာ ရှာမယ်
+    if f"{key}:{hwid}" in resp:
+        with open(LICENSE_FILE, "w") as f:
+            f.write(key)
+        print(f"{col('G')}[✓] Access Granted! License Saved for Offline Use.{col('OFF')}")
+        time.sleep(2)
+        return True
+    else:
+        print(f"{col('R')}[!] Invalid Key or Unauthorized ID.{col('OFF')}")
         sys.exit()
 
 def main_dashboard():
-    """Key မှန်မှ ပွင့်လာမည့် နေရာ"""
-    print(f"\033[93m--- [ SELECT AN OPTION ] ---\033[0m")
-    print(f"\033[92m[1] Launch Bypass Tool")
-    print(f"[2] Check Speed")
-    print(f"[3] Tool Settings")
-    print(f"[0] Exit Program\033[0m")
+    banner()
+    print(f"{col('Y')}--- [ RUIJIE BYPASS DASHBOARD ] ---{col('OFF')}")
+    print(f"{col('G')}[1] Start Bypass Protocol")
+    print(f"{col('G')}[2] Device Info")
+    print(f"{col('G')}[3] Settings")
+    print(f"{col('R')}[0] Exit Program{col('OFF')}")
     
-    opt = input(f"\n\033[96mChoose >> \033[0m")
-    if opt == "1":
-        print("\033[95m[+] Tool is initializing...\033[0m")
-        # ဒီနေရာမှာ သင်လုပ်စေချင်တဲ့ အလုပ်တွေကို ထည့်ပါ
-    else:
-        print("\033[93mExiting...\033[0m")
+    choice = input(f"\n{col('C')}Select Option >> {col('OFF')}")
+    
+    if choice == "1":
+        print(f"\n{col('P')}[+] Bypass System is Online...{col('OFF')}")
+        # ဒီနေရာမှာ သင်လုပ်စေချင်တဲ့ Bypass Script တွေကို ထည့်ပါ
+    elif choice == "0":
         sys.exit()
-
-# စာသားအရောင်များ (Helper)
-col_y = "\033[93m"
-col_off = "\033[0m"
+    else:
+        main_dashboard()
 
 if __name__ == "__main__":
-    try:
-        # Key စစ်မယ်
-        if check_access():
-            # Key မှန်ရင် Dashboard ပြမယ်
-            main_dashboard()
-    except KeyboardInterrupt:
-        print("\n\033[91m[!] Stopped by User.\033[0m")
-        os._exit(0)
+    # Program စတင်ခြင်း
+    if verify():
+        main_dashboard()
