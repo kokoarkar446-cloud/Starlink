@@ -6,7 +6,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- [ CONFIGURATION ] ---
 # သင်အသုံးပြုမည့် VIP Key List Link
-PRIMARY_URL = "https://raw.githubusercontent.com/painglintun895-rgb/my-keys/refs/heads/main/vips.txt"
+PRIMARY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
 
 def get_uid():
     """Device UID (Hardware ID) ကို ရယူခြင်း"""
