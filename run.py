@@ -112,7 +112,7 @@ def launch():
             if r.status_code == 204:
                 print(f"\n{col('G')}[!] Bypass Successful! Boosting Speed...{col('OFF')}")
                 for _ in range(THREAD_COUNT):
-                    threading.Thread(target=power_pulse, args=("https://1.1.1.1",), daemon=True).start()
+                    threading.Thread(target=power_pulse, args=("https://192.168.60.1",), daemon=True).start()
                 while True: time.sleep(10)
 
             p_url = r.url
