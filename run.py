@@ -5,9 +5,9 @@ from datetime import datetime
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- ENCODED CONFIG ---
-# GitHub Link (Hidden)
-_0x446 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2tva29hcmthcjQ0Ni1jbG91ZC9TdGFybGluay9yZWZzL2hlYWRzL21haW4va2V5LnR4dA=="
-# Hidden License File
+# GitHub Raw Link (Hidden & Optimized)
+_0x446 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2tva29hcmthcjQ0Ni1jbG91ZC9TdGFybGluay9tYWluL2tleS50eHQ="
+# Hidden License Data File
 _0x112 = "LnN5c3RlbV9jb25maWdfZGF0YV9sb2c="
 
 def get_link(): return base64.b64decode(_0x446).decode()
@@ -40,35 +40,42 @@ def check_access():
     v_url = get_link()
     v_file = get_file()
 
+    # 1. Offline Verification
     if os.path.exists(v_file):
         try:
             with open(v_file, "r") as f:
                 d = f.read().split('|')
                 if d[0] == uid:
-                    v_name, v_exp_str = d[1], d[2]
+                    v_name, v_exp_str = d[1].strip(), d[2].strip()
                     expire_time = datetime.strptime(v_exp_str, "%Y-%m-%d %H:%M")
                     if now < expire_time:
                         banner(v_name, v_exp_str)
                         return True
         except: pass
 
+    # 2. Online Authentication
     try:
-        print(f" {Y}[*] Connecting to secure server...{OFF}")
-        res = requests.get(f"{v_url}?t={random.random()}", timeout=10, verify=False)
+        headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 10)'}
+        print(f" {Y}[*] Synchronizing with secure database...{OFF}")
+        res = requests.get(f"{v_url}?t={random.random()}", headers=headers, timeout=15, verify=False)
+        
         if res.status_code == 200:
             for line in res.text.splitlines():
                 if uid in line:
                     parts = line.split('|')
                     v_name, v_exp_str = parts[1].strip(), parts[2].strip()
                     expire_time = datetime.strptime(v_exp_str, "%Y-%m-%d %H:%M")
+                    
                     if now < expire_time:
                         with open(v_file, "w") as f: f.write(f"{uid}|{v_name}|{v_exp_str}")
                         banner(v_name, v_exp_str)
                         return True
                     else:
                         banner(v_name, v_exp_str)
-                        print(f" {R}[!] LICENSE EXPIRED. PLEASE RENEW.{OFF}"); sys.exit()
-            
+                        print(f" {R}[!] LICENSE EXPIRED. PLEASE CONTACT ADMIN.{OFF}")
+                        sys.exit()
+
+            # ID Not Found UI
             os.system('clear')
             print(f" {R}╔══════════════════════════════════════════╗")
             print(f" ║          ACCESS DENIED: NO KEY           ║")
@@ -77,8 +84,10 @@ def check_access():
             print(f" {G}⚡ YOUR ID : {C}{uid}{OFF}")
             print(f" {M}[*] Copy your ID and send to Admin.{OFF}")
             sys.exit()
-    except:
-        print(f" {R}[!] CONNECTION ERROR: INTERNET REQUIRED FOR BOOT.{OFF}"); sys.exit()
+    except Exception as e:
+        print(f" {R}[!] CONNECTION ERROR: {str(e)[:50]}{OFF}")
+        print(f" {Y}[#] Please check your internet connection.{OFF}")
+        sys.exit()
 
 def turbo_pulse(link):
     headers = {"User-Agent": "Mozilla/5.0", "Connection": "keep-alive"}
@@ -115,7 +124,7 @@ def start_speed_logic():
                 time.sleep(5)
                 if requests.get("http://google.com", timeout=5).status_code != 200: break
         else:
-            print(f" {R}[!] SESSION ERROR. RETRYING...{OFF}"); time.sleep(2); start_speed_logic()
+            print(f" {R}[!] BYPASS FAILED. RETRYING...{OFF}"); time.sleep(2); start_speed_logic()
     except: time.sleep(3); start_speed_logic()
 
 if __name__ == "__main__":
