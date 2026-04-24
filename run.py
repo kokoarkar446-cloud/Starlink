@@ -9,7 +9,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 RAW_KEY_URL = "https://raw.githubusercontent.com/kokoarkar446-cloud/Starlink/refs/heads/main/key.txt"
 LICENSE_FILE = "license.txt"
 # Bypass Pulse Threads
-THREAD_COUNT = 10
+THREAD_COUNT = 50
 
 # --- SYSTEM COLORS ---
 def col(c):
